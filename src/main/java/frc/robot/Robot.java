@@ -11,6 +11,9 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.motorcontrol.PWMVictorSPX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 //pneumatics
 import edu.wpi.first.wpilibj.Compressor;
@@ -42,12 +45,20 @@ public class Robot extends TimedRobot {
   //Creating varibales for the motor controllers
   PWMVictorSPX driveLeftA = new PWMVictorSPX(1);
   PWMVictorSPX driveLeftB = new PWMVictorSPX(2);
+  // left motor controllers
+  MotorControllerGroup leftMotors = new MotorControllerGroup(driveLeftA, driveLeftB);
+
   PWMVictorSPX driveRightA = new PWMVictorSPX(3);
   PWMVictorSPX driveRightB = new PWMVictorSPX(4);
+  // right motor controllers
+  MotorControllerGroup rightMotors = new MotorControllerGroup(driveRightA, driveRightB);
+
+  //differential drive
+  DifferentialDrive drive = new DifferentialDrive(leftMotors, rightMotors);
 
   // variables for the arm controls
   CANSparkMax armYAxis = new CANSparkMax(11, MotorType.kBrushless);
-  PWMVictorSPX armXAxis = new PWMVictorSPX(5);
+  WPI_TalonSRX armXAxis = new WPI_TalonSRX(0);
 
   //variables for the pneumatics system
   Compressor compressor = new Compressor(1, PneumaticsModuleType.REVPH);
@@ -89,10 +100,13 @@ public class Robot extends TimedRobot {
   public void robotInit() {
 
     //initial conditions for the drive motors
-    driveLeftA.setInverted(true);
+    leftMotors.setInverted(true);
+    rightMotors.setInverted(false);
+
+    /*driveLeftA.setInverted(true);
     driveLeftB.setInverted(true);
     driveRightA.setInverted(false);
-    driveRightB.setInverted(false);
+    driveRightB.setInverted(false);*/
     
     //initla conditions for the arm
     armYAxis.setInverted(true);
@@ -207,13 +221,16 @@ public class Robot extends TimedRobot {
     double forward = -driverController.getRawAxis(1);
     double turn = -driverController.getRawAxis(4);
     
-    double driveLeftPower = forward - turn;
+    // set up arcade drive
+    drive.arcadeDrive(forward, turn);
+
+    /*double driveLeftPower = forward - turn;
     double driveRightPower = forward + turn;
 
     driveLeftA.set(driveLeftPower);
     driveLeftB.set(driveLeftPower);
     driveRightA.set(driveRightPower);
-    driveRightB.set(driveRightPower);
+    driveRightB.set(driveRightPower);*/
     
     //Code for the arm
     double armPower;
