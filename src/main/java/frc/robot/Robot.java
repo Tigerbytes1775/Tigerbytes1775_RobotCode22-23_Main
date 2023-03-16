@@ -116,7 +116,7 @@ public class Robot extends TimedRobot {
     armXAxis.setInverted(false);
 
     //initial conditions for the intake
-    compressor.disable();
+    //compressor.disable();
 
     //add a thing on the dashboard to turn off auto if needed
     SmartDashboard.putBoolean("Go For Auto", false);
@@ -212,7 +212,7 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     //Set up arcade steer
     double forward = -driverController.getRawAxis(1);
-    double turn = -driverController.getRawAxis(4);
+    double turn = driverController.getRawAxis(4);
     
     // set up arcade drive
     drive.arcadeDrive(forward, turn);
