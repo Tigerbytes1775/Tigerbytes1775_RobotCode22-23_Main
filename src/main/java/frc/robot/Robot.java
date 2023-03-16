@@ -188,23 +188,14 @@ public class Robot extends TimedRobot {
     double autoTimeElapsed = Timer.getFPGATimestamp() - autoStart;
     if(goForAuto){
 
-      //series of timed events making up the flow of auto
-      if(autoTimeElapsed < 3){
-        //drop the ball
-        setArmXAxisMotor(0.1);
-        
-      }if(autoTimeElapsed < 3){
+      if(autoTimeElapsed < 2){
         //stop spitting out the ball and drive backwards *slowly* for three seconds
-        driveLeftA.set(-0.3);
-        driveLeftB.set(-0.3);
-        driveRightA.set(-0.3);
-        driveRightB.set(-0.3);
+        leftMotors.set(-0.5);
+        rightMotors.set(-0.5);
       } else {
         //do nothing for the rest of auto
-        driveLeftA.set(0);
-        driveLeftB.set(0);
-        driveRightA.set(0);
-        driveRightB.set(0);
+        leftMotors.set(0);
+        rightMotors.set(0);
       }
     }
 
@@ -212,7 +203,9 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when teleop is enabled. */
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {
+    compressor.enableAnalog(0, 120);
+  }
 
   /** This function is called periodically during operator control. */
   @Override
