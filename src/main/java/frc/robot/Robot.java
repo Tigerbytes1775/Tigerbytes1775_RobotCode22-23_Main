@@ -11,6 +11,8 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.motorcontrol.PWMVictorSPX;
+
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -21,8 +23,14 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 
 //joysticks
 import edu.wpi.first.wpilibj.Joystick;
+//import edu.wpi.first.wpilibj.PneumaticsControlModule;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.XboxController;
+
+//encoders
+/*import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxRelativeEncoder.Type;
+import com.revrobotics.CANSparkMax.SoftLimitDirection;*/
 
 //import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 /*import java.sql.Time;
@@ -43,13 +51,13 @@ import java.util.concurrent.TimeUnit;*/
 
 public class Robot extends TimedRobot {
   //Creating varibales for the motor controllers
-  PWMVictorSPX driveLeftA = new PWMVictorSPX(1);
-  PWMVictorSPX driveLeftB = new PWMVictorSPX(2);
+  PWMVictorSPX driveLeftA = new PWMVictorSPX(0);
+  PWMVictorSPX driveLeftB = new PWMVictorSPX(1);
   // left motor controllers
   MotorControllerGroup leftMotors = new MotorControllerGroup(driveLeftA, driveLeftB);
 
-  PWMVictorSPX driveRightA = new PWMVictorSPX(3);
-  PWMVictorSPX driveRightB = new PWMVictorSPX(4);
+  PWMVictorSPX driveRightA = new PWMVictorSPX(8);
+  PWMVictorSPX driveRightB = new PWMVictorSPX(9);
   // right motor controllers
   MotorControllerGroup rightMotors = new MotorControllerGroup(driveRightA, driveRightB);
 
@@ -58,15 +66,20 @@ public class Robot extends TimedRobot {
 
   // variables for the arm controls
   CANSparkMax armYAxis = new CANSparkMax(11, MotorType.kBrushless);
-  WPI_TalonSRX armXAxis = new WPI_TalonSRX(0);
+  WPI_TalonSRX armXAxis = new WPI_TalonSRX(3);
 
   //variables for the pneumatics system
-  Compressor compressor = new Compressor(1, PneumaticsModuleType.REVPH);
-  DoubleSolenoid solenoid = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
+  Compressor compressor = new Compressor(1, PneumaticsModuleType.CTREPCM);
+  DoubleSolenoid solenoid = new DoubleSolenoid(1, PneumaticsModuleType.CTREPCM, 0, 1);
+
+  //PneumaticsControlModule controlModule = new PneumaticsControlModule(1);
 
   // joysticks
-  Joystick driverController = new Joystick(1);
+  Joystick driverController = new Joystick(2);
   XboxController armController = new XboxController(0);
+
+  //initialize the encoder
+  //private RelativeEncoder yAxisEncoder;
 
   //Constants for controlling the arm. needs adjustments for this robot
   final double armTimeUp = 0.5;
@@ -74,8 +87,11 @@ public class Robot extends TimedRobot {
   //current limit for the arm
   static final int ArmCurrentLimitA = 20;
 
-  //Arm power output
-  static final double ArmOutputPower = 0.1;
+  //Arm power output for y axis
+  static final double ArmYOutputPower = 0.5;
+
+  // Arm power output for x axis
+  static final double ArmXOutputPower = 0.5;
 
   //time to move the arm
   static final double ArmExtendTime = 2.0;
@@ -116,11 +132,22 @@ public class Robot extends TimedRobot {
     armXAxis.setInverted(false);
 
     //initial conditions for the intake
-    //compressor.disable();
+    compressor.enableDigital();
 
     //add a thing on the dashboard to turn off auto if needed
     SmartDashboard.putBoolean("Go For Auto", false);
     goForAuto = SmartDashboard.getBoolean("Go For Auto", false);
+
+    //encoders
+    /*yAxisEncoder = armYAxis.getEncoder(Type.kHallSensor, 4096);
+    yAxisEncoder.setPosition(0);
+
+    armYAxis.enableSoftLimit(SoftLimitDirection.kForward, true);
+    armYAxis.enableSoftLimit(SoftLimitDirection.kReverse, false);
+
+    armYAxis.setSoftLimit(SoftLimitDirection.kForward, 0);*/
+    
+
   }
 
   /**
@@ -185,13 +212,13 @@ public class Robot extends TimedRobot {
     }*/
     
     //get time since start of auto then run drive code for autonomous
-    double autoTimeElapsed = Timer.getFPGATimestamp() - autoStart;
+    double autoTimeElapsed =  autoStart - Timer.getFPGATimestamp();
     if(goForAuto){
 
-      if(autoTimeElapsed < 2){
+      if(autoTimeElapsed < 5){
         //stop spitting out the ball and drive backwards *slowly* for three seconds
-        leftMotors.set(-0.5);
-        rightMotors.set(-0.5);
+        leftMotors.set(-0.75);
+        rightMotors.set(-0.75);
       } else {
         //do nothing for the rest of auto
         leftMotors.set(0);
@@ -204,7 +231,7 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
-    compressor.enableAnalog(0, 120);
+    //compressor.enableDigital();
   }
 
   /** This function is called periodically during operator control. */
@@ -231,11 +258,13 @@ public class Robot extends TimedRobot {
     // motion for the arm in the vertical direction
     if (armController.getLeftY() > 0.5) {
       //raise the arm
-      armPower = ArmOutputPower;
+      armPower = ArmYOutputPower;
+      //*armController.getLeftY();
     }
     else if (armController.getLeftY() < -0.5) {
       //lower the arm
-      armPower = -ArmOutputPower;
+      armPower = -ArmYOutputPower;
+      //*armController.getLeftY();
     }
     else {
       //do nothing and let it sit where it is
@@ -247,16 +276,20 @@ public class Robot extends TimedRobot {
     // motion for the arm in the horizontal direction
     if (armController.getLeftTriggerAxis() > 0.5) {
       //extend the arm
-      armPower = ArmOutputPower;
+      // we could set it to srmpower = armXOuptuPower x get left trigger axis ( test it on the pivot firs)
+      armPower = ArmXOutputPower;
+      //*armController.getLeftTriggerAxis();
     }
     else if (armController.getRightTriggerAxis() > 0.5) {
       //retract the arm
-      armPower = -ArmOutputPower;
+      armPower = -ArmXOutputPower;
+      //*armController.getRightTriggerAxis();
     }
     else {
       // do nothing and let it sit where it is
       armPower = 0.0;
-      armXAxis.stopMotor();
+      //armXAxis.stopMotor();
+      armXAxis.setNeutralMode(NeutralMode.Brake);
     }
     setArmXAxisMotor(armPower);
 
@@ -275,7 +308,7 @@ public class Robot extends TimedRobot {
     }
 
     //compressor controls
-    if (armController.getAButton()) {
+    /*if (armController.getAButton()) {
 
       //enable the compressdor
       compressor.enableAnalog(0, 50);
@@ -284,7 +317,7 @@ public class Robot extends TimedRobot {
 
       //disable the compressor
       compressor.disable();
-    }
+    }*/
 
    }
 
