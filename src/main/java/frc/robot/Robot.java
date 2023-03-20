@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 
 //joysticks
 import edu.wpi.first.wpilibj.Joystick;
-//import edu.wpi.first.wpilibj.PneumaticsControlModule;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.XboxController;
 
@@ -130,6 +129,7 @@ public class Robot extends TimedRobot {
     armYAxis.setSmartCurrentLimit(ArmCurrentLimitA);
     ((CANSparkMax) armYAxis).burnFlash();
     armXAxis.setInverted(false);
+    armXAxis.setNeutralMode(NeutralMode.Brake);
 
     //initial conditions for the intake
     compressor.enableDigital();
@@ -160,16 +160,12 @@ public class Robot extends TimedRobot {
   public void setArmYAxisMotor(double percent) {
     armYAxis.set(percent);
     SmartDashboard.putNumber("armYAxis power(%)", percent);
-    SmartDashboard.putNumber("arm motor current (amps)", armYAxis.getOutputCurrent());
-    SmartDashboard.putNumber("arm motor temperature(C)", armYAxis.getMotorTemperature());
   }
 
   //function to set the arm output power in the horizontal direction
   public void setArmXAxisMotor(double percent) {
     armXAxis.set(percent);
     SmartDashboard.putNumber("armXaxis power(%)", percent);
-    /*SmartDashboard.putNumber("armXAxis motor current (amps)", armXAxis.getVoltage());
-    SmartDashboard.putNumber("armXAxis motor temperature(C)", armXAxis.getMotorTemperature());*/
   }
   
  /**
@@ -191,15 +187,6 @@ public class Robot extends TimedRobot {
   //function that is called periodically during autonomous
   @Override
   public void autonomousPeriodic() {
-    //arm control code for autonomous
-    if(armUp){
-      if(Timer.getFPGATimestamp() - lastBurstTime < armTimeUp){
-        //armYAxis.set(armTravel1);
-      }
-      else{
-        //armYAxis.set(armHoldUp);
-      }
-    }
     /*else{
       if(Timer.getFPGATimestamp() - lastBurstTime < armTimeDown){
         arm.set(-armTravel);
@@ -212,7 +199,7 @@ public class Robot extends TimedRobot {
     }*/
     
     //get time since start of auto then run drive code for autonomous
-    double autoTimeElapsed =  autoStart - Timer.getFPGATimestamp();
+    double autoTimeElapsed =  Timer.getFPGATimestamp() - autoStart;
     if(goForAuto){
 
       if(autoTimeElapsed < 5){
@@ -243,14 +230,6 @@ public class Robot extends TimedRobot {
     
     // set up arcade drive
     drive.arcadeDrive(forward, turn);
-
-    /*double driveLeftPower = forward - turn;
-    double driveRightPower = forward + turn;
-
-    driveLeftA.set(driveLeftPower);
-    driveLeftB.set(driveLeftPower);
-    driveRightA.set(driveRightPower);
-    driveRightB.set(driveRightPower);*/
     
     //Code for the arm
     double armPower;
