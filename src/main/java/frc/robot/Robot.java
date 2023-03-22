@@ -31,22 +31,24 @@ import edu.wpi.first.wpilibj.XboxController;
 import com.revrobotics.SparkMaxRelativeEncoder.Type;
 import com.revrobotics.CANSparkMax.SoftLimitDirection;*/
 
-//import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-/*import java.sql.Time;
+//gyroscope
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+
+/*import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.BreakIterator;
-import java.util.concurrent.TimeUnit;*/
-//import com.ctre.phoenix.time.StopWatch;
-// import com.ctre.phoenix.motorcontrol.ControlMode;
-// import com.ctre.phoenix.motorcontrol.*;
-//import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
-//import com.ctre.phoenix.motorcontrol.can.VictorSPX;
-// import com.ctre.phoenix.motorcontrol.can.*;
-//import com.revrobotics.RelativeEncoder;
-// import com.revrobotics.SparkMaxPIDController; 
-// import com.ctre.phoenix.signals.*;
-//import edu.wpi.first.wpilibj.motorcontrol.MotorController;
-// import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import java.util.concurrent.TimeUnit;
+import com.ctre.phoenix.time.StopWatch;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.*;
+import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import com.ctre.phoenix.motorcontrol.can.*;
+import com.revrobotics.SparkMaxPIDController; 
+import com.ctre.phoenix.signals.*;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;*/
 
 public class Robot extends TimedRobot {
   //Creating varibales for the motor controllers
@@ -80,8 +82,10 @@ public class Robot extends TimedRobot {
   //initialize the encoder
   //private RelativeEncoder yAxisEncoder;
 
+  //initialize the gyrscope
+  ADXRS450_Gyro gyro = new ADXRS450_Gyro();
+
   //Constants for controlling the arm. needs adjustments for this robot
-  final double armTimeUp = 0.5;
 
   //current limit for the arm
   static final int ArmCurrentLimitA = 20;
@@ -92,9 +96,6 @@ public class Robot extends TimedRobot {
   // Arm power output for x axis
   static final double ArmXOutputPower = 0.5;
 
-  //time to move the arm
-  static final double ArmExtendTime = 2.0;
-
   //Varibles needed for the code
   boolean armUp = true; //Arm initialized to up because that's how it would start a match
   boolean burstMode = false;
@@ -103,6 +104,9 @@ public class Robot extends TimedRobot {
   double autoStart = 0;
   boolean goForAuto = true;
 
+  //gyroscope constants
+  double error;
+  double kp = 0.5;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -117,11 +121,6 @@ public class Robot extends TimedRobot {
     //initial conditions for the drive motors
     leftMotors.setInverted(true);
     rightMotors.setInverted(false);
-
-    /*driveLeftA.setInverted(true);
-    driveLeftB.setInverted(true);
-    driveRightA.setInverted(false);
-    driveRightB.setInverted(false);*/
     
     //initla conditions for the arm
     armYAxis.setInverted(true);
@@ -146,7 +145,6 @@ public class Robot extends TimedRobot {
     armYAxis.enableSoftLimit(SoftLimitDirection.kReverse, false);
 
     armYAxis.setSoftLimit(SoftLimitDirection.kForward, 0);*/
-    
 
   }
 
@@ -187,17 +185,9 @@ public class Robot extends TimedRobot {
   //function that is called periodically during autonomous
   @Override
   public void autonomousPeriodic() {
-    /*else{
-      if(Timer.getFPGATimestamp() - lastBurstTime < armTimeDown){
-        arm.set(-armTravel);
-        //arm.set(VictorSPXControlMode.PercentOutput, -armTravel);
-      }
-      else{
-        arm.set(-armHoldUp);
-        //arm.set(VictorSPXControlMode.PercentOutput, -armHoldUp);
-      }
-    }*/
-    
+    // define the error
+    error = 0 - gyro.getAngle();
+
     //get time since start of auto then run drive code for autonomous
     double autoTimeElapsed =  Timer.getFPGATimestamp() - autoStart;
     if(goForAuto){
@@ -206,6 +196,12 @@ public class Robot extends TimedRobot {
         //stop spitting out the ball and drive backwards *slowly* for three seconds
         leftMotors.set(-0.75);
         rightMotors.set(-0.75);
+        if (error != 0){
+          double speed = error*kp;
+          leftMotors.set(speed);
+          rightMotors.set(speed);
+        }
+
       } else {
         //do nothing for the rest of auto
         leftMotors.set(0);
