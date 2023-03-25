@@ -3,6 +3,9 @@
 //main imports
 package frc.robot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+//import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -85,13 +88,14 @@ public class Robot extends TimedRobot {
   //initialize the gyrscope
   ADXRS450_Gyro gyro = new ADXRS450_Gyro();
 
+
   //Constants for controlling the arm. needs adjustments for this robot
 
   //current limit for the arm
   static final int ArmCurrentLimitA = 20;
 
   //Arm power output for y axis
-  static final double ArmYOutputPower = 0.5;
+  static final double ArmYOutputPower = 0.6;
 
   // Arm power output for x axis
   static final double ArmXOutputPower = 0.5;
@@ -146,6 +150,9 @@ public class Robot extends TimedRobot {
 
     armYAxis.setSoftLimit(SoftLimitDirection.kForward, 0);*/
 
+    //set the gyro angle to 0
+    gyro.reset();
+
   }
 
   /**
@@ -180,11 +187,18 @@ public class Robot extends TimedRobot {
     autoStart = Timer.getFPGATimestamp();
     //check dashboard icon to ensure good to do auto
     goForAuto = SmartDashboard.getBoolean("Go For Auto", false);
+    goForAuto = true;
   }
 
   //function that is called periodically during autonomous
   @Override
   public void autonomousPeriodic() {
+    //read the gyro value
+    SmartDashboard.putNumber("gyro angle", gyro.getAngle());
+    ShuffleboardTab gyroData = Shuffleboard.getTab("gyro values");
+    gyroData.add("gyro angle", gyro.getAngle());
+    //gyroData.withWidget(BuiltInWidgets.kGraph);
+
     // define the error
     error = 0 - gyro.getAngle();
 
@@ -192,15 +206,15 @@ public class Robot extends TimedRobot {
     double autoTimeElapsed =  Timer.getFPGATimestamp() - autoStart;
     if(goForAuto){
 
-      if(autoTimeElapsed < 5){
+      if(autoTimeElapsed < 1.5){
         //stop spitting out the ball and drive backwards *slowly* for three seconds
-        leftMotors.set(-0.75);
-        rightMotors.set(-0.75);
-        if (error != 0){
+        leftMotors.set(-0.60);
+        rightMotors.set(-0.60);
+        /*if (error != 0){
           double speed = error*kp;
           leftMotors.set(speed);
           rightMotors.set(speed);
-        }
+        }*/
 
       } else {
         //do nothing for the rest of auto
