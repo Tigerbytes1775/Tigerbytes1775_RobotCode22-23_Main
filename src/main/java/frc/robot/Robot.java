@@ -4,8 +4,8 @@
 package frc.robot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 //import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+//import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+//import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -195,9 +195,11 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     //read the gyro value
     SmartDashboard.putNumber("gyro angle", gyro.getAngle());
-    ShuffleboardTab gyroData = Shuffleboard.getTab("gyro values");
-    gyroData.add("gyro angle", gyro.getAngle());
-    //gyroData.withWidget(BuiltInWidgets.kGraph);
+    /*Shuffleboard.getTab("SmartDashboard")
+      .add("Gyro Angle", gyro.getAngle())
+      .withWidget(BuiltInWidgets.kGraph)
+      .withProperties(Map.of("min", -360, "max", 360))
+      .getEntry();*/
 
     // define the error
     error = 0 - gyro.getAngle();
@@ -234,6 +236,9 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    // enable the gyro - for testing
+    SmartDashboard.putNumber("Gyro Angle", gyro.getAngle());
+
     //Set up arcade steer
     double forward = -driverController.getRawAxis(1);
     double turn = driverController.getRawAxis(4);
