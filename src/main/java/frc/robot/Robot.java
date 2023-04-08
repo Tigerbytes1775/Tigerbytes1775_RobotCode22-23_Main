@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 //pneumatics
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 //joysticks
 import edu.wpi.first.wpilibj.Joystick;
@@ -31,8 +32,8 @@ import edu.wpi.first.wpilibj.XboxController;
 
 //encoders
 /*import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxRelativeEncoder.Type;
-import com.revrobotics.CANSparkMax.SoftLimitDirection;*/
+import com.revrobotics.SparkMaxRelativeEncoder.Type;*/
+import com.revrobotics.CANSparkMax.SoftLimitDirection;
 
 //gyroscope
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
@@ -88,7 +89,6 @@ public class Robot extends TimedRobot {
   //initialize the gyrscope
   ADXRS450_Gyro gyro = new ADXRS450_Gyro();
 
-
   //Constants for controlling the arm. needs adjustments for this robot
 
   //current limit for the arm
@@ -98,7 +98,7 @@ public class Robot extends TimedRobot {
   static final double ArmYOutputPower = 0.6;
 
   // Arm power output for x axis
-  static final double ArmXOutputPower = 0.5;
+  static final double ArmXOutputPower = 0.65;
 
   //Varibles needed for the code
   boolean armUp = true; //Arm initialized to up because that's how it would start a match
@@ -136,6 +136,7 @@ public class Robot extends TimedRobot {
 
     //initial conditions for the intake
     compressor.enableDigital();
+    solenoid.set(Value.kForward);
 
     //add a thing on the dashboard to turn off auto if needed
     SmartDashboard.putBoolean("Go For Auto", false);
@@ -143,15 +144,17 @@ public class Robot extends TimedRobot {
 
     //encoders
     /*yAxisEncoder = armYAxis.getEncoder(Type.kHallSensor, 4096);
-    yAxisEncoder.setPosition(0);
+    yAxisEncoder.setPosition(0);*/
 
-    armYAxis.enableSoftLimit(SoftLimitDirection.kForward, true);
+    // limit the direction of the arm's rotations (kReverse = up)
+    armYAxis.enableSoftLimit(SoftLimitDirection.kForward, false);
     armYAxis.enableSoftLimit(SoftLimitDirection.kReverse, false);
 
-    armYAxis.setSoftLimit(SoftLimitDirection.kForward, 0);*/
+    /*armYAxis.setSoftLimit(SoftLimitDirection.kForward, 0);
+    armYAxis.setSoftLimit(SoftLimitDirection.kReverse, 0);*/
 
-    //set the gyro angle to 0
-    gyro.reset();
+    //recalibrate the gyro every time the robotis turned on
+    gyro.calibrate();
 
   }
 
@@ -188,6 +191,9 @@ public class Robot extends TimedRobot {
     //check dashboard icon to ensure good to do auto
     goForAuto = SmartDashboard.getBoolean("Go For Auto", false);
     goForAuto = true;
+
+    //reset the gyro to 0
+    gyro.reset();
   }
 
   //function that is called periodically during autonomous
@@ -207,11 +213,14 @@ public class Robot extends TimedRobot {
     //get time since start of auto then run drive code for autonomous
     double autoTimeElapsed =  Timer.getFPGATimestamp() - autoStart;
     if(goForAuto){
+      //drop the cargo
+      if ((autoTimeElapsed > 8) && (autoTimeElapsed < 11)){
+        solenoid.set(Value.kReverse);
 
-      if(autoTimeElapsed < 1.5){
-        //stop spitting out the ball and drive backwards *slowly* for three seconds
+      /*} else if((autoTimeElapsed > 12) && (autoTimeElapsed < 13)){
+        //drive backwards onto the charging station (to dock: deltaT=1.775 *1.6 worked during the practice matches)
         leftMotors.set(-0.60);
-        rightMotors.set(-0.60);
+        rightMotors.set(-0.60);*/
         /*if (error != 0){
           double speed = error*kp;
           leftMotors.set(speed);
@@ -293,25 +302,13 @@ public class Robot extends TimedRobot {
     if(armController.getLeftBumperPressed()){
 
       //fire the air one way
-      solenoid.set(DoubleSolenoid.Value.kForward);
+      solenoid.set(Value.kForward);
       
     } else if(armController.getRightBumperPressed()){
 
       //fire the air the other way
-      solenoid.set(DoubleSolenoid.Value.kReverse);
+      solenoid.set(Value.kReverse);
     }
-
-    //compressor controls
-    /*if (armController.getAButton()) {
-
-      //enable the compressdor
-      compressor.enableAnalog(0, 50);
-
-    } else if (armController.getBButton()) {
-
-      //disable the compressor
-      compressor.disable();
-    }*/
 
    }
 
